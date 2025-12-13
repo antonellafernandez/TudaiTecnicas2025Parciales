@@ -1,0 +1,178 @@
+﻿*************************** Parte 1 ************************
+
+
+import static org.testng.Assert.assertEquals;
+
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.support.PageFactory;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+
+public class Spotify {
+        private WebDriver driver; 
+        private SpotifyLogin SPFYLogIn;
+        private SpotifyBuscarCancion SPFYSearchSong;
+
+
+        @BeforeClass
+        public void initPageFactory() {
+                driver = new ChromeDriver();
+                SPFYLogIn = PageFactory.initElements(driver, SpotifyLogin.class);
+                SPFYSearchSong = PageFactory.initElements(driver, SpotifyBuscarCancion.class);
+        }
+
+
+        @Test (priority=1)
+        public void loadPage() {
+                driver.navigate().to("https://open.spotify.com");
+                String titulo = driver.getTitle();
+                String expectedTitle = "Spotify – Web Player";
+                System.out.println(titulo);
+                //Comprobamos que realmente estamos en Spotify. Buena Practica!!!
+                assertEquals(titulo, expectedTitle);
+                SPFYSearchSong.sacarCookies();
+        }
+
+
+        @Test (priority=2) 
+        public void login() {
+                SPFYLogIn.login("ek05gnv6k8v77xyfusx4tleq4", "nuevapassword");
+        }
+
+
+        @Test (priority=3)
+        public void searchSong() {
+                SPFYSearchSong.searchAndPlay("learning to fly");
+        }
+
+
+        /*@Test (priority=4)
+        public void closeDriver() {
+                if(driver!=null) {
+                        driver.close();
+                        driver=null;
+                }
+                System.out.println("Spotify terminó satisfactoriamente");
+                Assert.assertNull(driver);
+        }*/
+
+
+}
+
+
+
+
+*************************** Parte 2 ****************************************
+
+
+import java.time.Duration;
+
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+
+public class SpotifyBuscarCancion {
+        private final WebDriver driver;
+        private final WebDriverWait wait1, wait2;
+        private final Duration time1;
+        private final Duration time2;
+        private WebElement btnCookies, searchButton, searchBar, firstSong;
+        
+        public SpotifyBuscarCancion(WebDriver driver) {
+                this.driver = driver;
+                time1=Duration.ofMillis(4000);
+                time2=Duration.ofMillis(8000);
+                wait1 = new WebDriverWait(this.driver, time1);
+                wait2 = new WebDriverWait(this.driver, time2);
+        }
+        
+        public void sacarCookies() {
+                btnCookies= wait1.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"onetrust-close-btn-container\"]/button")));
+                btnCookies.click();
+        }
+
+
+        public void searchAndPlay(String song) {
+                searchButton = wait2.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@data-testid='search-input']"))); 
+                searchButton.click();
+                
+                searchBar = wait2.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"global-nav-bar\"]/div[2]/div/div/form/div[2]/input")));
+                searchBar.sendKeys(song);
+                
+                firstSong = wait2.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"searchPage\"]/div/div/section[2]/section/div[2]/div/div/div/div/div[2]/div[1]/div/div/div[1]/div[1]/img")));
+                
+                //Para hacer movimientos del mouse mas complejos! drag and drop
+                Actions action = new Actions(driver);
+                action.doubleClick(firstSong).perform();
+        }
+}
+
+
+
+
+*************************** Parte 3 *********************************
+
+
+import java.time.Duration;
+
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+
+public class SpotifyLogin {
+        private final WebDriver driver;
+        private final WebDriverWait wait;
+        private final Duration time;
+        private WebElement username, password, loginBtn, passBtn, loginBtn2, initSession;
+
+
+        //@FindBy(xpath="//*[@id=\"global-nav-bar\"]/div[3]/div/div/button[2]/span") WebElement initSession; //Otra alternativa!
+        
+        /* tener cuidado con este tipo de inicializaciones cuando no se cargaron los elementos aun
+        @FindBy(id="login-username") WebElement loginUsr; //Otra alternativa!
+        @FindBy(id="login-password") WebElement loginPsw; //Otra alternativa!
+        @FindBy(id="login-button") WebElement loginBtn; //Otra alternativa!
+        */
+        
+        
+        public SpotifyLogin(WebDriver driver) {
+                this.driver = driver;
+                time=Duration.ofMillis(8000);
+                wait = new WebDriverWait(this.driver, time);
+        }
+        
+        public void login(String user, String pass) {
+                // en este caso esperamos a que se carguen porque puede fallar sino        
+                initSession=wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"global-nav-bar\"]/div[3]/div/div/button[2]/span")));
+                initSession.click();
+                
+                username = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"username\"]")));
+                username.sendKeys(user);
+                
+                loginBtn = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"__next\"]/main/section/div/div/form/button/span")));
+                loginBtn.click();                
+                
+                passBtn = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"encore-web-main-content\"]/div[2]/div/div/div/form/div[2]/section/button")));
+                passBtn.click();        
+                
+                password = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"password\"]")));
+                password.sendKeys(pass);
+                
+                loginBtn2 = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"__next\"]/main/section/div/div/form/button/span")));
+                loginBtn2.click();                
+
+
+        }
+}

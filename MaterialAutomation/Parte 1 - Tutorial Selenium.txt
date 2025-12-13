@@ -1,0 +1,166 @@
+﻿*************************** Parte 1  - Descargar herramientas para desarrollo ************************
+
+
+Bajar Selenium para java y agregar las librerías externas (todos los jars del zip) en el build path dentro del classpath.
+https://www.selenium.dev/downloads/ 
+
+
+*************************** Parte 2 - Definir archivo con el main ****************************************
+
+
+public class GoogleSearchMain {
+        public static void main(String[] args) {
+                GoogleSearch buscador = new GoogleSearch();
+                buscador.launchBrowser();
+                buscador.launchTest();
+                // Para observar lo sucedido, se puede comentar la siguiente llamada asi no se cierra
+                //buscador.closeDriver();
+        }
+}
+
+
+*************************** Parte 3 - Definir archivo con funcionalidad *********************************
+
+
+import java.io.File;
+import java.time.Duration;
+import java.util.Arrays;
+
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+
+public class GoogleSearch {
+        private WebDriver driver;
+        
+        public void launchBrowser() {
+                // creamos opciones para que no nos haga completar el captcha, no lo elimina por completo
+                ChromeOptions options = new ChromeOptions();
+                options.addArguments("--disable-blink-features=AutomationControlled");
+                // creamos una instancia del driver con ciertas opciones
+                driver = new ChromeDriver(options);
+
+
+        }
+        public void launchTest() {
+                driver.navigate().to("https://www.google.com.ar");
+                String titulo = driver.getTitle();        
+                System.out.println("Entró en " + titulo);
+                
+                // definimos un tiempo máximo para la espera
+                Duration time=Duration.ofMillis(4000);
+                WebDriverWait wait = new WebDriverWait(driver, time);                                                                         
+                // definimos la forma de buscar el elemento en la página
+                By elementLocator = By.name("q");
+                
+                //Esperamos a que cargue la barra de búsqueda                
+                WebElement element= wait.until(ExpectedConditions.visibilityOfElementLocated(elementLocator));
+                        
+                //Escribimos en la barra de búsqueda "Los simpson"
+                element.sendKeys("The Simpsons");
+                        
+                //Por último, esperamos a que cargue el boton buscar y hacemos click
+                element= wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("btnK")));
+                element.click();
+        }
+        public void closeDriver() {
+                if(driver!=null) {
+                        driver.close();
+                        System.out.println("Google terminó satisfactoriamente");
+                }
+        }
+}
+
+
+
+
+********* Usando el patrón page object con el pageFactory de Selenium ****************
+
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+
+
+public class SearchPageMain {
+        private static WebDriver driver;
+        
+    public static void main(String[] args) {
+                // creamos opciones para que no nos haga completar el captcha, no lo elimina por completo
+            ChromeOptions options = new ChromeOptions();
+                options.addArguments("--disable-blink-features=AutomationControlled");
+                // creamos una instancia del driver con ciertas opciones
+                driver = new ChromeDriver(options);
+        driver.get("https://google.com.ar");
+    
+        // creamos la instancia
+        SearchPage searchPage = new SearchPage(driver);
+        // buscamos algo
+        searchPage.buscar("The Simpsons");
+        // cerramos el driver
+        //driver.close();
+    }
+}
+
+
+
+
+********** Crear la clase con los objetos del page object que se inicializará con el pageFactory **
+
+
+import java.time.Duration;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.PageFactory;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+
+public class SearchPage {
+    
+    @FindBy(name = "q") 
+    private WebElement q;
+    
+    @FindBy(name = "btnK") 
+    private WebElement btnK;
+    
+    private WebDriver driver;
+    
+    // Constructor
+    public SearchPage(WebDriver driver) {
+            this.driver = driver;
+        PageFactory.initElements(this.driver, this);
+    }
+
+
+    public void buscar(String busqueda) {
+        q.sendKeys(busqueda);
+
+
+        // en caso que no cargue los elementos a tiempo habra que hacer alguna de las siguientes esperas
+        
+        // espera ocupada (faltan las exceptions)
+        //TimeUnit.SECONDS.sleep(3);
+        
+        
+        // o usamos la espera de Selenium
+        Duration time=Duration.ofMillis(8000);
+        WebDriverWait wait = new WebDriverWait(driver, time);                                                                         
+        //Esperamos a que cargue el boton                
+        WebElement element= wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("btnK")));
+        element.click();
+        
+        //btnK.click();
+    }
+}

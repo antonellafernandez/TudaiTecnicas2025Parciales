@@ -1,0 +1,12 @@
+﻿************ CREAR EL ARCHIVO TESTSUITE *************************************************
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Suite TDV 2025" parallel="false">
+  <test name="Test TDV 2025">
+    <classes>
+      <class name="tudai.tdv.selenium.MercadoLibre"/>
+    </classes>
+  </test> <!-- Test TDV 2025 -->
+</suite> <!-- Suite TDV 2025-->

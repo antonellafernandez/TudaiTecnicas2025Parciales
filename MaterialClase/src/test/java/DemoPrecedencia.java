@@ -22,7 +22,6 @@ public class DemoPrecedencia {
     @Before
     public void setUp() throws Exception {
         System.out.println("DemoPrecedencia -> Before");
-
     }
 
     // tearDown() método para instancias de test

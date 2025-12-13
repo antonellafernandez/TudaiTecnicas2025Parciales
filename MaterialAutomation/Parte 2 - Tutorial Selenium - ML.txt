@@ -1,0 +1,129 @@
+﻿*************************** Parte 1 ************************
+
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.PageFactory;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+
+public class MercadoLibre {
+        private WebDriver driver;
+        private MercadoLibreBuscarProducto MLBuscar;
+
+
+        @BeforeClass
+        public void initPageFactory() {
+            ChromeOptions options = new ChromeOptions();
+                options.addArguments("--disable-blink-features=AutomationControlled");
+                driver = new ChromeDriver(options);
+                
+                MLBuscar = PageFactory.initElements(driver, MercadoLibreBuscarProducto.class);
+        }
+
+
+        @Test (priority=1)
+        public void loadPage() {
+                driver.navigate().to("https://www.mercadolibre.com.ar");
+                System.out.println(driver.getTitle());
+                Assert.assertEquals(driver.getTitle(), "Mercado Libre Argentina - Envíos Gratis en el día");
+                MLBuscar.sacarCookies();
+                MLBuscar.quitarUbicacion();
+        }
+        
+        @Test (priority=2)
+        public void searchProduct() {
+                final String textoAbuscar="Placa de video Nvidia MSI Gaming GeForce RTX 30 Series RTX 3080 Ti 12GB";
+                MLBuscar.search("GPU");
+                MLBuscar.scrolear(textoAbuscar);
+        }
+        
+        /*@Test (priority=3)
+        public void finishTest() {
+                if(driver!=null) {
+                        driver.close();
+                        driver = null;
+                }
+                System.out.println("Mercado Libre terminó satisfactoriamente");
+                Assert.assertNull(driver);
+        }*/
+}
+
+
+
+
+
+
+
+
+*************************** Parte 2 ****************************************
+
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+
+public class MercadoLibreBuscarProducto {
+        private final WebDriver driver;
+        private final WebDriverWait wait;
+        private final Duration time;
+        private WebElement searchbar, btnCookies, btnUbicacion;
+        
+        public MercadoLibreBuscarProducto(WebDriver driver) {
+                this.driver = driver;
+                time=Duration.ofMillis(8000);
+                wait = new WebDriverWait(this.driver, time);
+        }
+
+
+        public void search(String busqueda) {
+                searchbar = wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("nav-search-input")));
+                searchbar.clear();
+                searchbar.sendKeys(busqueda);
+                searchbar.submit();
+        }
+        
+        public void sacarCookies() {
+                btnCookies= wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@data-testid='action:understood-button']")));
+                btnCookies.click();
+        }
+
+
+        public void quitarUbicacion() {
+                btnUbicacion= wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("/html/body/div[5]/div/div/div[2]/div/div/div[2]/button[2]/span")));
+                btnUbicacion.click();
+        }
+        
+        public void scrolear(String textoABuscar) {
+                //Scroleamos, para ello es necesario ejecutar funcionalidad Javascript
+                JavascriptExecutor js = (JavascriptExecutor) driver;
+                boolean findElement=false;
+                while (findElement == false) {
+                        js.executeScript("window.scrollBy(0,350)", ""); //scroleamos
+                        try {
+                                Duration time=Duration.ofMillis(8000);
+                                WebDriverWait wait = new WebDriverWait(driver, time);
+                                WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(By.partialLinkText(textoABuscar)));
+                                findElement = true;
+                                element.click();
+                        }
+                        catch(Exception e){
+                                findElement = false;
+                        }
+                }
+                try {
+                        TimeUnit.SECONDS.sleep(5);
+                } catch (InterruptedException e) {
+                        e.printStackTrace();
+                }
+        }
+}
